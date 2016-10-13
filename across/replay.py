@@ -8,11 +8,13 @@ class Across10Internal(Adapter):
         18: 19, 19: 20, 20: 21, 21: 22, 22: 80, 23: 38
     }
 
+    ACROSS10_LEVELS = 24
+
     def __init__(self, subcon):
         super(Across10Internal, self).__init__(subcon)
 
     def _decode(self, obj, context):
-        assert obj <= 23
+        assert obj < self.ACROSS10_LEVELS
         if obj in self.LEVEL_MAPPING:
             return self.LEVEL_MAPPING[obj]
         return obj
@@ -21,14 +23,20 @@ class Across10Internal(Adapter):
         for k, v in self.LEVEL_MAPPING.iteritems():
             if obj == v:
                 return k
-        assert obj <= 23
+        assert obj < self.ACROSS10_LEVELS
         return obj
 
 
 # noinspection PyPep8,PyUnresolvedReferences
 Event = Struct(
-    "time" / Float64l,
-    "data" / Bytes(8)
+    "time"   / Float64l,
+    "object" / Int16sl,
+    "type"   / Int8ul,
+               Int8ul,
+    "volume" / Float32l,
+    IfThenElse(this.type == 0,
+               Check(this.object >= 0),
+               Check(this.object == -1))
 )
 
 # noinspection PyPep8,PyUnresolvedReferences
@@ -53,20 +61,20 @@ Replay = Struct(
     "frames_num" / Int32ul,
     Embedded(Select(Across12Header, Across10Header)),
     Embedded(Struct(
-        "data_1" / Array(this._.frames_num, Float32l),
-        "data_2" / Array(this._.frames_num, Float32l),
-        "data_3" / Array(this._.frames_num, Float32l),
-        "data_4" / Array(this._.frames_num, Float32l),
-        "data_5" / Array(this._.frames_num, Float32l),
-        "data_6" / Array(this._.frames_num, Float32l),
-        "data_7" / Array(this._.frames_num, Float32l),
-        "data_8" / Array(this._.frames_num, Float32l),
-        "data_9" / Array(this._.frames_num, Float32l),
-        "data_A" / Array(this._.frames_num, Int8ul),
-        "data_B" / Array(this._.frames_num, Float32l),
-        "data_C" / Array(this._.frames_num, Int8ul),
-        "data_D" / Array(this._.frames_num, Float32l),
-        "data_E" / Array(this._.frames_num, Float32l)
+        "bike_x"     / Array(this._.frames_num, Float32l),
+        "bike_y"     / Array(this._.frames_num, Float32l),
+        "lwhl_x"     / Array(this._.frames_num, Float32l),
+        "lwhl_y"     / Array(this._.frames_num, Float32l),
+        "rwhl_x"     / Array(this._.frames_num, Float32l),
+        "rwhl_y"     / Array(this._.frames_num, Float32l),
+        "bike_a"     / Array(this._.frames_num, Float32l),
+        "lwhl_a"     / Array(this._.frames_num, Float32l),
+        "rwhl_a"     / Array(this._.frames_num, Float32l),
+        "direction"  / Array(this._.frames_num, Enum(Int8ul, left=0, right=1)),
+        "engine_rpm" / Array(this._.frames_num, Float32l),
+        "throttling" / Array(this._.frames_num, Flag),
+        "friction_1" / Array(this._.frames_num, Float32l),
+        "friction_2" / Array(this._.frames_num, Float32l)
     )),
     "events_num" / Int32ul,
     "events"     / Array(this.events_num, Event),
