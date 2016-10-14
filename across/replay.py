@@ -124,12 +124,14 @@ Replay = Struct(
 
 def test_replay(filepath):
     with open(filepath) as f:
-        # noinspection PyBroadException
-        try:
-            Replay.parse(f.read())
-            print filepath, "OK"
-        except Exception as e:
-            print filepath, "FAILED", e
+        data = f.read()
+
+    # noinspection PyBroadException
+    try:
+        Replay.build(Replay.parse(data))
+        print filepath, "OK"
+    except Exception as e:
+        print filepath, "FAILED", e
 
 
 if __name__ == "__main__":
