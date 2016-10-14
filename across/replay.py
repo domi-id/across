@@ -27,6 +27,31 @@ class Across10Internal(Adapter):
         return obj
 
 
+class SlicingAdapter(Adapter):
+    """
+    Adapter to convert a dict of several arrays of the same length
+    into an array of dicts.
+
+    {"a": [0, 1], "b": [2, 3]} -> [{"a": 0, "b": 2}, {"a": 1, "b": 3}]
+    """
+
+    def _decode(self, obj, context):
+        result = ListContainer()
+        lengths = set([len(x) for x in obj.values()])
+        assert len(lengths) == 1
+        for i in xrange(lengths.pop()):
+            result.append(Container((k, v[i]) for k, v in obj.items()))
+        return result
+
+    def _encode(self, obj, context):
+        result = Container()
+        keys = [x for x in obj[0].keys()]
+        assert all([x for x in v.keys()] == keys for v in obj)
+        for k in keys:
+            result[k] = ListContainer(x[k] for x in obj)
+        return result
+
+
 # noinspection PyPep8,PyUnresolvedReferences
 Event = Struct(
     "time"   / Float64l,
@@ -60,7 +85,7 @@ Across12Header = Struct(
 Replay = Struct(
     "frames_num" / Int32ul,
     Embedded(Select(Across12Header, Across10Header)),
-    Embedded(Struct(
+    "frames"     / SlicingAdapter(Struct(
         "bike_x"     / Array(this._.frames_num, Float32l),
         "bike_y"     / Array(this._.frames_num, Float32l),
         "lwhl_x"     / Array(this._.frames_num, Float32l),
