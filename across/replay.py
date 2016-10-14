@@ -56,10 +56,11 @@ class SlicingAdapter(Adapter):
 Event = Struct(
     "time"   / Float64l,
     "object" / Int16sl,
-    "type"   / Int8ul,
-               Int8ul,
+    "type"   / Padded(2, Enum(Int8ul, object_taken=0, bounce=1, failure=2,
+                                      success=3, apple=4, changedir=5,
+                                      right_volt=6, left_volt=7)),
     "volume" / Float32l,
-    IfThenElse(this.type == 0,
+    IfThenElse(this.type == "object_taken",
                Check(this.object >= 0),
                Check(this.object == -1))
 )
