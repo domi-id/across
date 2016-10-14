@@ -98,7 +98,7 @@ Across12Header = Struct(
 
 # noinspection PyProtectedMember,PyPep8,PyUnresolvedReferences
 Replay = Struct(
-    "frames_num" / Int32ul,
+    "frames_num" / Rebuild(Int32ul, len_(this.frames)),
     Embedded(Select(Across12Header, Across10Header)),
     "frames"     / SlicingAdapter(Struct(
         "bike_x"     / Array(this._.frames_num, Float32l),
@@ -116,7 +116,7 @@ Replay = Struct(
         "friction_1" / Array(this._.frames_num, Float32l),
         "friction_2" / Array(this._.frames_num, Float32l)
     )),
-    "events_num" / Int32ul,
+    "events_num" / Rebuild(Int32ul, len_(this.events)),
     "events"     / Array(this.events_num, Event),
     "end_marker" / Const(Int32ul, 0x492f75)
 )
