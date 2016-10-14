@@ -2,16 +2,22 @@
 from construct import *
 
 
-class Across10Internal(Adapter):
+class Across10InternalAdapter(Adapter):
+    """
+    Adapter to convert internal level number between Across 1.0 and Across 1.2
+    numbering systems.
+
+    In Across 1.0 and 1.1 levels are numbered [0..23] inclusive.
+    In Across 1.2+ levels are numbered [0..99] and some of the original levels
+    have a different number there, hence the mapping dict.
+    """
+
     LEVEL_MAPPING = {
         11: 81, 12: 11, 13: 82, 14: 84, 15: 17, 16: 83, 17: 18,
         18: 19, 19: 20, 20: 21, 21: 22, 22: 80, 23: 38
     }
 
     ACROSS10_LEVELS = 24
-
-    def __init__(self, subcon):
-        super(Across10Internal, self).__init__(subcon)
 
     def _decode(self, obj, context):
         assert obj < self.ACROSS10_LEVELS
@@ -52,6 +58,18 @@ class SlicingAdapter(Adapter):
         return result
 
 
+def event_integrity(event):
+    if event.type == "object_taken":
+        return event.object >= 0
+    return event.object == -1
+
+
+def header_integrity(header):
+    if header.link_number > 0:
+        return header.internal_num == -1
+    return 0 <= header.internal_num < 100
+
+
 # noinspection PyPep8,PyUnresolvedReferences
 Event = Struct(
     "time"   / Float64l,
@@ -60,26 +78,22 @@ Event = Struct(
                                       success=3, apple=4, changedir=5,
                                       right_volt=6, left_volt=7)),
     "volume" / Float32l,
-    IfThenElse(this.type == "object_taken",
-               Check(this.object >= 0),
-               Check(this.object == -1))
+    Check(event_integrity)
 )
 
 # noinspection PyPep8,PyUnresolvedReferences
 Across10Header = Struct(
-    "version"      / Computed(lambda ctx: 100),
-    "link_number"  / Computed(lambda ctx: 0),
-    "internal_num" / Across10Internal(Int32ul)
+    "version"      / Computed(100),
+    "link_number"  / Computed(0),
+    "internal_num" / Across10InternalAdapter(Int32ul)
 )
 
 # noinspection PyPep8,PyUnresolvedReferences
 Across12Header = Struct(
     "version"      / Const(Int32ul, 120),
     "link_number"  / Int32ul,
-    "internal_num" / Int32ul,
-    IfThenElse(this.link_number > 0,
-               Check(this.internal_num == 0xFFFFFFFF),
-               Check(this.internal_num <= 90))
+    "internal_num" / Int32sl,
+    Check(header_integrity)
 )
 
 # noinspection PyProtectedMember,PyPep8,PyUnresolvedReferences
@@ -104,7 +118,7 @@ Replay = Struct(
     )),
     "events_num" / Int32ul,
     "events"     / Array(this.events_num, Event),
-    "end_marker" / Const(Int32ul, 4796277)
+    "end_marker" / Const(Int32ul, 0x492f75)
 )
 
 
