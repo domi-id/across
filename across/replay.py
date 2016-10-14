@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from construct import *
 
 
@@ -26,7 +27,7 @@ class Across10InternalAdapter(Adapter):
         return obj
 
     def _encode(self, obj, context):
-        for k, v in self.LEVEL_MAPPING.iteritems():
+        for k, v in self.LEVEL_MAPPING.items():
             if obj == v:
                 return k
         assert obj < self.ACROSS10_LEVELS
@@ -45,7 +46,7 @@ class SlicingAdapter(Adapter):
         result = ListContainer()
         lengths = set([len(x) for x in obj.values()])
         assert len(lengths) == 1
-        for i in xrange(lengths.pop()):
+        for i in range(lengths.pop()):
             result.append(Container((k, v[i]) for k, v in obj.items()))
         return result
 
@@ -123,15 +124,15 @@ Replay = Struct(
 
 
 def test_replay(filepath):
-    with open(filepath) as f:
+    with open(filepath, "rb") as f:
         data = f.read()
 
     # noinspection PyBroadException
     try:
         Replay.build(Replay.parse(data))
-        print filepath, "OK"
+        print(filepath, "OK")
     except Exception as e:
-        print filepath, "FAILED", e
+        print(filepath, "FAILED", e)
 
 
 if __name__ == "__main__":
