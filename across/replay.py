@@ -46,7 +46,7 @@ class SlicingAdapter(Adapter):
 
     def _decode(self, obj, context):
         # make sure obj only contains lists of the same length
-        length = len(obj.values().next())
+        length = len(next(obj.values()))
         for v in obj.values():
             assert isinstance(v, ListContainer) and len(v) == length
 
