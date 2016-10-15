@@ -36,27 +36,30 @@ class Across10InternalAdapter(Adapter):
 
 class SlicingAdapter(Adapter):
     """
-    Adapter to convert a dict of several arrays of the same length
-    into an array of dicts.
+    Adapter to convert a dict of several lists of the same length
+    into a list of dicts and vice versa.
 
     {"a": [0, 1], "b": [2, 3]} -> [{"a": 0, "b": 2}, {"a": 1, "b": 3}]
     """
 
     def _decode(self, obj, context):
-        result = ListContainer()
-        lengths = set([len(x) for x in obj.values()])
-        assert len(lengths) == 1
-        for i in range(lengths.pop()):
-            result.append(Container((k, v[i]) for k, v in obj.items()))
-        return result
+        # make sure obj only contains lists of the same length
+        length = len(obj.values().next())
+        for v in obj.values():
+            assert isinstance(v, ListContainer) and len(v) == length
 
-    def _encode(self, obj, context):
-        result = Container()
-        keys = [x for x in obj[0].keys()]
-        assert all([x for x in v.keys()] == keys for v in obj)
-        for k in keys:
-            result[k] = ListContainer(x[k] for x in obj)
-        return result
+        # second zip creates slices, first zip adds keys
+        return ListContainer(Container(zip(obj.keys(), slice_))
+                             for slice_ in zip(*obj.values()))
+
+    def _encode(self, lst, context):
+        # make sure all objects in list have same keys
+        keys = set(lst[0].keys())
+        assert all(set(obj.keys()) == keys for obj in lst)
+
+        # for each key take a corresponding value from every object in the list
+        return Container((key, ListContainer(x[key] for x in lst))
+                         for key in lst[0].keys())
 
 
 def event_integrity(event):
