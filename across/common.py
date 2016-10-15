@@ -1,3 +1,7 @@
+from __future__ import print_function
+
+import os
+
 from construct import *
 
 
@@ -42,5 +46,25 @@ class ZeroStringAdapter(Adapter):
         return obj
 
 
+# noinspection PyPep8Naming
 def ZeroString(length):
     return ZeroStringAdapter(Bytes(length))
+
+
+def test_file(filepath, structure):
+    with open(filepath, "rb") as f:
+        data = f.read()
+
+    # noinspection PyBroadException
+    try:
+        structure.build(structure.parse(data))
+        print(filepath, "OK")
+    except Exception as e:
+        print(filepath, "FAILED", e)
+
+
+def test_folder(path, extension, structure):
+    for root, dirs, files in os.walk(path):
+        for name in files:
+            if name.lower().endswith(extension):
+                test_file(os.path.join(root, name), structure)

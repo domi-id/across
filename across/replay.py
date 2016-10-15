@@ -1,7 +1,8 @@
 #!/usr/bin/env python
-from __future__ import print_function
 
 from construct import *
+
+from common import test_folder
 
 
 class Across10InternalAdapter(Adapter):
@@ -127,27 +128,7 @@ Replay = Struct(
 )
 
 
-def test_replay(filepath):
-    with open(filepath, "rb") as f:
-        data = f.read()
-
-    # noinspection PyBroadException
-    try:
-        Replay.build(Replay.parse(data))
-        print(filepath, "OK")
-    except Exception as e:
-        print(filepath, "FAILED", e)
-
-
-def test_folder(path):
-    for root, dirs, files in os.walk(path):
-        for name in files:
-            if name.lower().endswith(".rec"):
-                test_replay(os.path.join(root, name))
-
-
 if __name__ == "__main__":
-    import os
     import sys
 
-    test_folder(sys.argv[1])
+    test_folder(sys.argv[1], ".rec", Replay)

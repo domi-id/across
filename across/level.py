@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
-
 import random
 
 from construct import *
 
-from common import ZeroString, InlineArrayAdapter
+from common import ZeroString, InlineArrayAdapter, test_folder
 
 
 OBJECT_TYPES = dict(flower=1, apple=2, killer=3, start=4)
@@ -146,27 +144,7 @@ Level = Struct(
 )
 
 
-def test_level(filepath):
-    with open(filepath, "rb") as f:
-        data = f.read()
-
-    # noinspection PyBroadException
-    try:
-        Level.build(Level.parse(data))
-        print(filepath, "OK")
-    except Exception as e:
-        print(filepath, "FAILED", e)
-
-
-def test_folder(path):
-    for root, dirs, files in os.walk(path):
-        for name in files:
-            if name.lower().endswith(".lev"):
-                test_level(os.path.join(root, name))
-
-
 if __name__ == "__main__":
-    import os
     import sys
 
-    test_folder(sys.argv[1])
+    test_folder(sys.argv[1], ".lev", Level)
