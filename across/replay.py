@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from __future__ import print_function
+
 from construct import *
 
 
@@ -138,11 +139,15 @@ def test_replay(filepath):
         print(filepath, "FAILED", e)
 
 
+def test_folder(path):
+    for root, dirs, files in os.walk(path):
+        for name in files:
+            if name.lower().endswith(".rec"):
+                test_replay(os.path.join(root, name))
+
+
 if __name__ == "__main__":
     import os
     import sys
 
-    for root, dirs, files in os.walk(sys.argv[1]):
-        for name in files:
-            if name.lower().endswith(".rec"):
-                test_replay(os.path.join(root, name))
+    test_folder(sys.argv[1])
