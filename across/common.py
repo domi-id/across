@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import errno
 import os
 
 from construct import *
@@ -51,6 +52,11 @@ def ZeroString(length):
     return ZeroStringAdapter(Bytes(length))
 
 
+# noinspection PyPep8Naming
+def FixedArray(max_length, length, subcon):
+    return Padded(max_length * subcon.sizeof(), Array(length, subcon))
+
+
 def test_file(filepath, structure):
     with open(filepath, "rb") as f:
         data = f.read()
@@ -68,3 +74,13 @@ def test_folder(path, extension, structure):
         for name in files:
             if name.lower().endswith(extension):
                 test_file(os.path.join(root, name), structure)
+
+
+def mkdir_p(path):
+    try:
+        os.makedirs(path)
+    except OSError as exc:
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
