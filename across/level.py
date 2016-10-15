@@ -4,12 +4,15 @@ import random
 
 from construct import *
 
-from common import ZeroString, InlineArrayAdapter, test_folder
+from common import ZeroString, InlineArrayAdapter, FixedArray, SlicingAdapter, test_folder
+from encryption import EncryptedBlock
 
 
 OBJECT_TYPES = dict(flower=1, apple=2, killer=3, start=4)
 CLIPPING = dict(none=0, ground=1, sky=2)
 GRAVITY = dict(none=0, up=1, down=2, left=3, right=4)
+
+LEV_ENCRYPTION = 21, 9783, 3389, 31
 
 
 def level_hash(level):
@@ -96,6 +99,30 @@ ElmaObject = Struct(
     "animation" / Int32ul
 )
 
+LevelTime = ExprAdapter(Int32ul,
+                        decoder=lambda obj, ctx: obj / 100.0,
+                        encoder=lambda obj, ctx: int(100.0 * obj))
+
+# noinspection PyPep8,PyUnresolvedReferences,PyProtectedMember
+Times = Struct(
+    "count"  / Int32ul,
+    "data"   / SlicingAdapter(Struct(
+        "time"   / FixedArray(10, this._.count, LevelTime),
+        "nick_a" / FixedArray(10, this._.count, ZeroString(15)),
+        "nick_b" / FixedArray(10, this._.count, ZeroString(15))
+    ))
+)
+
+# noinspection PyPep8,PyUnresolvedReferences
+Topten = Struct(
+    Const(Int32ul, 0x67103a),
+    Embedded(EncryptedBlock(LEV_ENCRYPTION, Struct(
+        "single" / InlineArrayAdapter("data", Times),
+        "multi"  / InlineArrayAdapter("data", Times)
+    ))),
+    Const(Int32ul, 0x845d52)
+)
+
 # noinspection PyPep8,PyUnresolvedReferences
 Header06 = Padded(100, Struct(
     "version"     / Const(b"POT06"),
@@ -140,7 +167,8 @@ Level14 = Struct(
 # noinspection PyUnresolvedReferences
 Level = Struct(
     Embedded(Select(Level14, Level06)),
-    Check(level_integrity)
+    Check(level_integrity),
+    "topten" / Optional(Topten)
 )
 
 

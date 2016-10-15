@@ -2,7 +2,7 @@
 
 from construct import *
 
-from common import test_folder
+from common import SlicingAdapter, test_folder
 
 
 class Across10InternalAdapter(Adapter):
@@ -34,34 +34,6 @@ class Across10InternalAdapter(Adapter):
                 return k
         assert obj < self.ACROSS10_LEVELS
         return obj
-
-
-class SlicingAdapter(Adapter):
-    """
-    Adapter to convert a dict of several lists of the same length
-    into a list of dicts and vice versa.
-
-    {"a": [0, 1], "b": [2, 3]} -> [{"a": 0, "b": 2}, {"a": 1, "b": 3}]
-    """
-
-    def _decode(self, obj, context):
-        # make sure obj only contains lists of the same length
-        length = len(next(obj.values()))
-        for v in obj.values():
-            assert isinstance(v, ListContainer) and len(v) == length
-
-        # second zip creates slices, first zip adds keys
-        return ListContainer(Container(zip(obj.keys(), slice_))
-                             for slice_ in zip(*obj.values()))
-
-    def _encode(self, lst, context):
-        # make sure all objects in list have same keys
-        keys = set(lst[0].keys())
-        assert all(set(obj.keys()) == keys for obj in lst)
-
-        # for each key take a corresponding value from every object in the list
-        return Container((key, ListContainer(x[key] for x in lst))
-                         for key in lst[0].keys())
 
 
 def event_integrity(event):
