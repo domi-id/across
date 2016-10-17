@@ -6,7 +6,8 @@ import os
 from construct import *
 
 
-class InlineArrayAdapter(Adapter):
+# noinspection PyPep8Naming
+def InlineArrayAdapter(data_field, subcon):
     """
     Given a wrapped array structure where all fields except array are computed
     (eg. size + array + checksum), returns only array itself.
@@ -14,37 +15,9 @@ class InlineArrayAdapter(Adapter):
     This might be useful to remove unnecessary levels of indirection:
         level.polygons.data[0] -> level.polygons[0]
     """
-
-    __slots__ = ["data_field"]
-
-    def __init__(self, data_field, subcon):
-        super(InlineArrayAdapter, self).__init__(subcon)
-        self.data_field = data_field
-
-    def _decode(self, obj, context):
-        return obj[self.data_field]
-
-    def _encode(self, obj, context):
-        return Container({self.data_field: obj})
-
-
-class ZeroStringAdapter(Adapter):
-    """
-    Special string type: string is zero-terminated,
-    but doesn't exceed given length
-    """
-
-    def _decode(self, obj, context):
-        if b"\x00" in obj:
-            return obj[:obj.find(b"\x00")]
-        return obj
-
-    def _encode(self, obj, context):
-        length = self.subcon.sizeof(context)
-        obj = obj.ljust(length, b"\x00")
-        if len(obj) > length:
-            obj = obj[:length]
-        return obj
+    return ExprAdapter(subcon,
+                       decoder=lambda obj, ctx: obj[data_field],
+                       encoder=lambda obj, ctx: Container({data_field: obj}))
 
 
 class SlicingAdapter(Adapter):
@@ -75,14 +48,38 @@ class SlicingAdapter(Adapter):
                          for key in lst[0].keys())
 
 
+class ZeroStringAdapter(Adapter):
+    """
+    Special string type: string is zero-terminated,
+    but doesn't exceed given length
+    """
+
+    def _decode(self, obj, context):
+        if b"\x00" in obj:
+            return obj[:obj.find(b"\x00")]
+        return obj
+
+    def _encode(self, obj, context):
+        length = self.subcon.sizeof(context)
+        obj = obj.ljust(length, b"\x00")
+        if len(obj) > length:
+            obj = obj[:length]
+        return obj
+
+
 # noinspection PyPep8Naming
 def ZeroString(length):
     return ZeroStringAdapter(Bytes(length))
 
 
 # noinspection PyPep8Naming
-def FixedArray(max_length, length, subcon):
+def PreallocatedArray(max_length, length, subcon):
     return Padded(max_length * subcon.sizeof(), Array(length, subcon))
+
+
+# noinspection PyPep8Naming
+def Boolean(subcon):
+    return SymmetricMapping(subcon, {True: 1, False: 0})
 
 
 def test_file(filepath, structure):

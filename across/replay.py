@@ -2,7 +2,7 @@
 
 from construct import *
 
-from common import SlicingAdapter, test_folder
+from common import SlicingAdapter, Boolean, test_folder
 
 EVENT_TYPES = dict(object_taken=0, bounce=1, failure=2, success=3, apple=4,
                    changedir=5, right_volt=6, left_volt=7)
@@ -93,12 +93,11 @@ Replay = Struct(
         "rwhl_a"     / Array(this._.frames_num, Float32l),
         "direction"  / Array(this._.frames_num, Enum(Int8ul, **BIKE_DIR)),
         "engine_rpm" / Array(this._.frames_num, Float32l),
-        "throttling" / Array(this._.frames_num, Flag),
+        "throttling" / Array(this._.frames_num, Boolean(Int8ul)),
         "friction_1" / Array(this._.frames_num, Float32l),
         "friction_2" / Array(this._.frames_num, Float32l)
     )),
-    "events_num" / Rebuild(Int32ul, len_(this.events)),
-    "events"     / Array(this.events_num, Event),
+    "events" / PrefixedArray(Int32ul, Event),
     Const(Int32ul, 0x492f75)
 )
 

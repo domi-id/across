@@ -4,7 +4,7 @@ import os
 
 from construct import *
 
-from common import ZeroString, FixedArray, test_folder, mkdir_p
+from common import ZeroString, PreallocatedArray, test_folder, mkdir_p
 from encryption import EncryptedBlock
 
 
@@ -21,7 +21,7 @@ ResourceEntry = Struct(
 RawResourceFile = Struct(
     "files_num"  / Int32ul,
     "file_table" / EncryptedBlock(RES_ENCRYPTION,
-                                  FixedArray(150, this.files_num, ResourceEntry)),
+                                  PreallocatedArray(150, this.files_num, ResourceEntry)),
     Const(Int32ul, 0x1490ff),
     "raw_data" / GreedyBytes
 )

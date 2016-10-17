@@ -4,8 +4,8 @@ import random
 
 from construct import *
 
-from common import ZeroString, InlineArrayAdapter, FixedArray, SlicingAdapter, \
-                   test_folder
+from common import ZeroString, InlineArrayAdapter, PreallocatedArray, SlicingAdapter, \
+                   Boolean, test_folder
 from encryption import EncryptedBlock
 
 
@@ -51,14 +51,6 @@ def level_integrity(level):
     return all(tests)
 
 
-# noinspection PyPep8Naming,PyPep8,PyUnresolvedReferences
-def FloatPrefixedArray(magic_number, subcon):
-    return InlineArrayAdapter("data", Struct(
-        "count" / Rebuild(Float64l, lambda ctx: len(ctx.data) + magic_number),
-        "data"  / Array(lambda ctx: int(ctx.count), subcon)
-    ))
-
-
 # noinspection PyUnresolvedReferences
 Point2D = Struct(
     "x" / Float64l,
@@ -67,8 +59,7 @@ Point2D = Struct(
 
 # noinspection PyPep8,PyUnresolvedReferences
 BasePolygon = Struct(
-    "vertex_num" / Rebuild(Int32ul, len_(this.vertices)),
-    "vertices"   / Array(this.vertex_num, Point2D)
+    "vertices" / PrefixedArray(Int32ul, Point2D)
 )
 
 # noinspection PyPep8,PyUnresolvedReferences
@@ -89,7 +80,7 @@ BasePicture = Struct(
 
 # noinspection PyUnresolvedReferences
 ElmaPolygon = Struct(
-    "grass" / Int32ul,
+    "grass" / Boolean(Int32ul),
     Embedded(BasePolygon)
 )
 
@@ -105,21 +96,21 @@ LevelTime = ExprAdapter(Int32ul,
                         encoder=lambda obj, ctx: int(100.0 * obj))
 
 # noinspection PyPep8,PyUnresolvedReferences,PyProtectedMember
-Times = Struct(
+Times = InlineArrayAdapter("data", Struct(
     "count"  / Int32ul,
     "data"   / SlicingAdapter(Struct(
-        "time"   / FixedArray(10, this._.count, LevelTime),
-        "nick_a" / FixedArray(10, this._.count, ZeroString(15)),
-        "nick_b" / FixedArray(10, this._.count, ZeroString(15))
+        "time"   / PreallocatedArray(10, this._.count, LevelTime),
+        "nick_a" / PreallocatedArray(10, this._.count, ZeroString(15)),
+        "nick_b" / PreallocatedArray(10, this._.count, ZeroString(15))
     ))
-)
+))
 
 # noinspection PyPep8,PyUnresolvedReferences
 Topten = Struct(
     Const(Int32ul, 0x67103a),
     Embedded(EncryptedBlock(LEV_ENCRYPTION, Struct(
-        "single" / InlineArrayAdapter("data", Times),
-        "multi"  / InlineArrayAdapter("data", Times)
+        "single" / Times,
+        "multi"  / Times
     ))),
     Const(Int32ul, 0x845d52)
 )
@@ -150,19 +141,27 @@ Header14 = Struct(
     "sky"         / ZeroString(10)
 )
 
+
+# noinspection PyPep8Naming
+def FloatCount(magic_number):
+    return ExprAdapter(Float64l,
+                       decoder=lambda obj, ctx: int(obj),
+                       encoder=lambda obj, ctx: obj + magic_number)
+
+
 # noinspection PyPep8,PyUnresolvedReferences
 Level06 = Struct(
     Embedded(Header06),
-    "polygons" / FloatPrefixedArray(0.4643643, BasePolygon),
-    "objects"  / FloatPrefixedArray(0.4643643, BaseObject)
+    "polygons" / PrefixedArray(FloatCount(0.4643643), BasePolygon),
+    "objects"  / PrefixedArray(FloatCount(0.4643643), BaseObject)
 )
 
 # noinspection PyPep8,PyUnresolvedReferences
 Level14 = Struct(
     Embedded(Header14),
-    "polygons" / FloatPrefixedArray(0.4643643, ElmaPolygon),
-    "objects"  / FloatPrefixedArray(0.4643643, ElmaObject),
-    "pictures" / FloatPrefixedArray(0.2345672, BasePicture)
+    "polygons" / PrefixedArray(FloatCount(0.4643643), ElmaPolygon),
+    "objects"  / PrefixedArray(FloatCount(0.4643643), ElmaObject),
+    "pictures" / PrefixedArray(FloatCount(0.2345672), BasePicture)
 )
 
 # noinspection PyUnresolvedReferences
