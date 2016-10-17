@@ -34,7 +34,7 @@ class Across10InternalAdapter(Adapter):
         return obj
 
     def _encode(self, obj, context):
-        for k, v in self.LEVEL_MAPPING.items():
+        for k, v in self.LEVEL_MAPPING.iteritems():
             if obj == v:
                 return k
         assert obj < self.ACROSS10_LEVELS

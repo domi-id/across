@@ -23,7 +23,7 @@ class CryptoStream(object):
         return r
 
     def crypt(self, data):
-        data = list(map(ord, data))
+        data = map(ord, data)
         result = chr(data[0] ^ self.a)
 
         x = (self.b + self.a * self.c) * self.d + self.c

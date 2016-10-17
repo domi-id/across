@@ -117,7 +117,7 @@ Topten = Struct(
 
 # noinspection PyPep8,PyUnresolvedReferences
 Header06 = Padded(100, Struct(
-    "version"     / Const(b"POT06"),
+    "version"     / Const("POT06"),
     "link_number" / Int32ul,
     "integrity_1" / Rebuild(Float64l, level_hash),
     "integrity_2" / Rebuild(Float64l, integrity_computer(11877, 5871)),
@@ -128,7 +128,7 @@ Header06 = Padded(100, Struct(
 
 # noinspection PyPep8,PyUnresolvedReferences
 Header14 = Struct(
-    "version"     / Const(b"POT14"),
+    "version"     / Const("POT14"),
     Padding(2),
     "link_number" / Int32ul,
     "integrity_1" / Float64l,

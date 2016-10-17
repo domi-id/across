@@ -41,7 +41,7 @@ class ResourceFileAdapter(Adapter):
 
     def _encode(self, files, context):
         file_table = []
-        raw_data = b""
+        raw_data = ""
         last_offset = self.HEADER_SIZE
         for file_name, file_data in files.items():
             file_table.append({"name": file_name,

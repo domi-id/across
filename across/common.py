@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import errno
 import os
 
@@ -55,13 +53,13 @@ class ZeroStringAdapter(Adapter):
     """
 
     def _decode(self, obj, context):
-        if b"\x00" in obj:
-            return obj[:obj.find(b"\x00")]
+        if "\x00" in obj:
+            return obj[:obj.find("\x00")]
         return obj
 
     def _encode(self, obj, context):
         length = self.subcon.sizeof(context)
-        obj = obj.ljust(length, b"\x00")
+        obj = obj.ljust(length, "\x00")
         if len(obj) > length:
             obj = obj[:length]
         return obj
@@ -89,9 +87,9 @@ def test_file(filepath, structure):
     # noinspection PyBroadException
     try:
         structure.build(structure.parse(data))
-        print(filepath, "OK")
+        print filepath, "OK"
     except Exception as e:
-        print(filepath, "FAILED", e)
+        print filepath, "FAILED", e
 
 
 def test_folder(path, extension, structure):
