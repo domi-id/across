@@ -4,6 +4,11 @@ from construct import *
 
 from common import SlicingAdapter, test_folder
 
+EVENT_TYPES = dict(object_taken=0, bounce=1, failure=2, success=3, apple=4,
+                   changedir=5, right_volt=6, left_volt=7)
+
+BIKE_DIR = dict(left=0, right=1)
+
 
 class Across10InternalAdapter(Adapter):
     """
@@ -52,9 +57,7 @@ def header_integrity(header):
 Event = Struct(
     "time"   / Float64l,
     "object" / Int16sl,
-    "type"   / Padded(2, Enum(Int8ul, object_taken=0, bounce=1, failure=2,
-                                      success=3, apple=4, changedir=5,
-                                      right_volt=6, left_volt=7)),
+    "type"   / Padded(2, Enum(Int8ul, **EVENT_TYPES)),
     "volume" / Float32l,
     Check(event_integrity)
 )
@@ -88,7 +91,7 @@ Replay = Struct(
         "bike_a"     / Array(this._.frames_num, Float32l),
         "lwhl_a"     / Array(this._.frames_num, Float32l),
         "rwhl_a"     / Array(this._.frames_num, Float32l),
-        "direction"  / Array(this._.frames_num, Enum(Int8ul, left=0, right=1)),
+        "direction"  / Array(this._.frames_num, Enum(Int8ul, **BIKE_DIR)),
         "engine_rpm" / Array(this._.frames_num, Float32l),
         "throttling" / Array(this._.frames_num, Flag),
         "friction_1" / Array(this._.frames_num, Float32l),
@@ -96,7 +99,7 @@ Replay = Struct(
     )),
     "events_num" / Rebuild(Int32ul, len_(this.events)),
     "events"     / Array(this.events_num, Event),
-    "end_marker" / Const(Int32ul, 0x492f75)
+    Const(Int32ul, 0x492f75)
 )
 
 

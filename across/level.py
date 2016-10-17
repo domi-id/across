@@ -4,7 +4,8 @@ import random
 
 from construct import *
 
-from common import ZeroString, InlineArrayAdapter, FixedArray, SlicingAdapter, test_folder
+from common import ZeroString, InlineArrayAdapter, FixedArray, SlicingAdapter, \
+                   test_folder
 from encryption import EncryptedBlock
 
 

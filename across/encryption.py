@@ -42,9 +42,11 @@ class EncryptedBlock(Subconstruct):
         self.params = params
 
     def _parse(self, stream, context, path):
-        with CryptoStream(stream, self.subcon.sizeof(context), self.params) as crypto_stream:
+        length = self.subcon.sizeof(context)
+        with CryptoStream(stream, length, self.params) as crypto_stream:
             return self.subcon._parse(crypto_stream, context, path)
 
     def _build(self, obj, stream, context, path):
-        with CryptoStream(stream, self.subcon.sizeof(context), self.params) as crypto_stream:
+        length = self.subcon.sizeof(context)
+        with CryptoStream(stream, length, self.params) as crypto_stream:
             return self.subcon._build(obj, crypto_stream, context, path)
