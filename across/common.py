@@ -1,16 +1,17 @@
 import errno
 import os
 
-from construct import *
+from construct import (Adapter, Array, Bytes, Container, ExprAdapter,
+                       ListContainer, Padded, SymmetricMapping)
 
 
 # noinspection PyPep8Naming
 def InlineArrayAdapter(data_field, subcon):
     """
-    Given a wrapped array structure where all fields except array are computed
-    (eg. size + array + checksum), returns only array itself.
+    Given a structure that wraps an array with some computed fields
+    (eg. size + array + checksum), returns only the array itself.
 
-    This might be useful to remove unnecessary levels of indirection:
+    This might be useful to remove unnecessary indirection:
         level.polygons.data[0] -> level.polygons[0]
     """
     return ExprAdapter(subcon,
@@ -53,13 +54,13 @@ class ZeroStringAdapter(Adapter):
     """
 
     def _decode(self, obj, context):
-        if "\x00" in obj:
-            return obj[:obj.find("\x00")]
-        return obj
+        if b"\x00" in obj:
+            return str(obj[:obj.find(b"\x00")], "utf-8")
+        return str(obj, "utf-8")
 
     def _encode(self, obj, context):
         length = self.subcon.sizeof(context)
-        obj = obj.ljust(length, "\x00")
+        obj = bytes(obj, "utf-8").ljust(length, b"\x00")
         if len(obj) > length:
             obj = obj[:length]
         return obj
@@ -87,9 +88,9 @@ def test_file(filepath, structure):
     # noinspection PyBroadException
     try:
         structure.build(structure.parse(data))
-        print filepath, "OK"
+        print(filepath, "OK")
     except Exception as e:
-        print filepath, "FAILED", e
+        print(filepath, "FAILED", e)
 
 
 def test_folder(path, extension, structure):

@@ -1,4 +1,4 @@
-from construct import *
+from construct import RestreamedBytesIO, Subconstruct
 
 
 class CryptoStream(object):
@@ -11,7 +11,7 @@ class CryptoStream(object):
     def __enter__(self):
         return self.stream
 
-    def __exit__(self, type, value, tb):
+    def __exit__(self, typ, value, tb):
         self.stream.close()
 
     @staticmethod
@@ -23,15 +23,14 @@ class CryptoStream(object):
         return r
 
     def crypt(self, data):
-        data = map(ord, data)
-        result = chr(data[0] ^ self.a)
+        result = [data[0] ^ self.a]
 
         x = (self.b + self.a * self.c) * self.d + self.c
         for s in data[1:]:
-            result += chr(s ^ (x & 0xFF))
+            result.append(s ^ (x & 0xFF))
             x += self.signed_mod(x, self.c) * (self.c * self.d)
 
-        return result
+        return bytes(result)
 
 
 class EncryptedBlock(Subconstruct):
@@ -41,11 +40,13 @@ class EncryptedBlock(Subconstruct):
         super(EncryptedBlock, self).__init__(subcon)
         self.params = params
 
+    # noinspection PyProtectedMember
     def _parse(self, stream, context, path):
         length = self.subcon.sizeof(context)
         with CryptoStream(stream, length, self.params) as crypto_stream:
             return self.subcon._parse(crypto_stream, context, path)
 
+    # noinspection PyProtectedMember
     def _build(self, obj, stream, context, path):
         length = self.subcon.sizeof(context)
         with CryptoStream(stream, length, self.params) as crypto_stream:

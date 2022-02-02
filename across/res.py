@@ -1,11 +1,11 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
 
-from construct import *
+from construct import Adapter, Const, GreedyBytes, Int32ul, Struct, this
 
-from common import ZeroString, PreallocatedArray, test_folder, mkdir_p
-from encryption import EncryptedBlock
+from .common import ZeroString, PreallocatedArray, test_folder, mkdir_p
+from .encryption import EncryptedBlock
 
 
 RES_ENCRYPTION = 23, 9782, 3391, 31
@@ -41,7 +41,7 @@ class ResourceFileAdapter(Adapter):
 
     def _encode(self, files, context):
         file_table = []
-        raw_data = ""
+        raw_data = b""
         last_offset = self.HEADER_SIZE
         for file_name, file_data in files.items():
             file_table.append({"name": file_name,

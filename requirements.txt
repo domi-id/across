@@ -1,1 +1,1 @@
-construct >= 2.8.6
+construct >= 2.8.7, <= 2.8.22

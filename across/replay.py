@@ -1,8 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-from construct import *
+from construct import (Adapter, Array, Check, Computed, Const, Embedded, Enum,
+                       Float32l, Float64l, Int16sl, Int32sl, Int32ul, Int8ul,
+                       len_, Padded, PrefixedArray, Rebuild, Select, Struct, this)
 
-from common import SlicingAdapter, Boolean, test_folder
+from .common import SlicingAdapter, Boolean, test_folder
 
 EVENT_TYPES = dict(object_taken=0, bounce=1, failure=2, success=3, apple=4,
                    changedir=5, right_volt=6, left_volt=7)
@@ -34,7 +36,7 @@ class Across10InternalAdapter(Adapter):
         return obj
 
     def _encode(self, obj, context):
-        for k, v in self.LEVEL_MAPPING.iteritems():
+        for k, v in self.LEVEL_MAPPING.items():
             if obj == v:
                 return k
         assert obj < self.ACROSS10_LEVELS

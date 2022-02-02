@@ -1,12 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import random
 
-from construct import *
+from construct import (Check, Const, Embedded, Enum, ExprAdapter, Float64l, Int32ul, Optional,
+                       Padded, Padding, PrefixedArray, Rebuild, Select, Struct, this)
 
-from common import ZeroString, InlineArrayAdapter, PreallocatedArray, SlicingAdapter, \
-                   Boolean, test_folder
-from encryption import EncryptedBlock
+from .common import (ZeroString, InlineArrayAdapter, PreallocatedArray,
+                     SlicingAdapter, Boolean, test_folder)
+from .encryption import EncryptedBlock
 
 
 OBJECT_TYPES = dict(flower=1, apple=2, killer=3, start=4)
@@ -33,9 +34,9 @@ def level_hash(level):
     return result * 3247.764325643
 
 
-def integrity_computer(base, range):
+def integrity_computer(base, diapason):
     def integrity(level):
-        return random.randint(base, base + range - 1) - level.integrity_1
+        return random.randint(base, base + diapason - 1) - level.integrity_1
 
     return integrity
 
@@ -117,7 +118,7 @@ Topten = Struct(
 
 # noinspection PyPep8,PyUnresolvedReferences
 Header06 = Padded(100, Struct(
-    "version"     / Const("POT06"),
+    "version"     / Const(b"POT06"),
     "link_number" / Int32ul,
     "integrity_1" / Rebuild(Float64l, level_hash),
     "integrity_2" / Rebuild(Float64l, integrity_computer(11877, 5871)),
@@ -128,7 +129,7 @@ Header06 = Padded(100, Struct(
 
 # noinspection PyPep8,PyUnresolvedReferences
 Header14 = Struct(
-    "version"     / Const("POT14"),
+    "version"     / Const(b"POT14"),
     Padding(2),
     "link_number" / Int32ul,
     "integrity_1" / Float64l,
